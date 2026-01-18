@@ -5,37 +5,39 @@
  * This script helps convert MySQL data export to PostgreSQL-compatible format
  */
 
-import fs from 'fs';
-import path from 'path';
+import fs from "node:fs";
 
-const MYSQL_DUMP_FILE = 'mysql_data.sql';
-const POSTGRES_DUMP_FILE = 'postgres_data.sql';
+const MYSQL_DUMP_FILE = "mysql_data.sql";
+const POSTGRES_DUMP_FILE = "postgres_data.sql";
 
 function convertMySQLToPostgreSQL(mysqlDump) {
   let postgresDump = mysqlDump;
 
   // Convert boolean values (MySQL uses 1/0, PostgreSQL uses true/false)
-  postgresDump = postgresDump.replace(/,1,/g, ',true,');
-  postgresDump = postgresDump.replace(/,0,/g, ',false,');
-  postgresDump = postgresDump.replace(/\(1,/g, '(true,');
-  postgresDump = postgresDump.replace(/\(0,/g, '(false,');
-  postgresDump = postgresDump.replace(/,1\)/g, ',true)');
-  postgresDump = postgresDump.replace(/,0\)/g, ',false)');
+  postgresDump = postgresDump.replace(/,1,/g, ",true,");
+  postgresDump = postgresDump.replace(/,0,/g, ",false,");
+  postgresDump = postgresDump.replace(/\(1,/g, "(true,");
+  postgresDump = postgresDump.replace(/\(0,/g, "(false,");
+  postgresDump = postgresDump.replace(/,1\)/g, ",true)");
+  postgresDump = postgresDump.replace(/,0\)/g, ",false)");
 
   // Convert MySQL INSERT statements to PostgreSQL format
-  postgresDump = postgresDump.replace(/INSERT INTO `([^`]+)`/g, 'INSERT INTO "$1"');
-  
+  postgresDump = postgresDump.replace(
+    /INSERT INTO `([^`]+)`/g,
+    'INSERT INTO "$1"'
+  );
+
   // Convert backticks to double quotes for identifiers
   postgresDump = postgresDump.replace(/`([^`]+)`/g, '"$1"');
 
   // Convert MySQL date format if needed
   // MySQL and PostgreSQL both use ISO format, so this might not be necessary
-  
+
   // Handle AUTO_INCREMENT values - PostgreSQL will handle this automatically
   // Remove any explicit ID insertions if they conflict with SERIAL
-  
+
   // Convert MySQL specific functions if any
-  postgresDump = postgresDump.replace(/NOW\(\)/g, 'CURRENT_TIMESTAMP');
+  postgresDump = postgresDump.replace(/NOW\(\)/g, "CURRENT_TIMESTAMP");
 
   // Add ON CONFLICT clauses for unique constraints if needed
   // This is more complex and might need manual handling per table
@@ -44,17 +46,19 @@ function convertMySQLToPostgreSQL(mysqlDump) {
 }
 
 function generatePostgreSQLInserts() {
-  console.log('🔄 Converting MySQL data to PostgreSQL format...');
+  console.log("🔄 Converting MySQL data to PostgreSQL format...");
 
   if (!fs.existsSync(MYSQL_DUMP_FILE)) {
     console.error(`❌ MySQL dump file '${MYSQL_DUMP_FILE}' not found.`);
-    console.log('Please create a MySQL dump first:');
-    console.log('mysqldump -u your_user -p --no-create-info --complete-insert --single-transaction cliniccore > mysql_data.sql');
+    console.log("Please create a MySQL dump first:");
+    console.log(
+      "mysqldump -u your_user -p --no-create-info --complete-insert --single-transaction cliniccore > mysql_data.sql"
+    );
     process.exit(1);
   }
 
   try {
-    const mysqlDump = fs.readFileSync(MYSQL_DUMP_FILE, 'utf8');
+    const mysqlDump = fs.readFileSync(MYSQL_DUMP_FILE, "utf8");
     const postgresDump = convertMySQLToPostgreSQL(mysqlDump);
 
     // Add PostgreSQL-specific headers
@@ -108,16 +112,21 @@ COMMIT;
 
     fs.writeFileSync(POSTGRES_DUMP_FILE, finalDump);
 
-    console.log('✅ PostgreSQL data file generated successfully!');
+    console.log("✅ PostgreSQL data file generated successfully!");
     console.log(`📁 Output file: ${POSTGRES_DUMP_FILE}`);
-    console.log('');
-    console.log('Next steps:');
-    console.log('1. Ensure PostgreSQL is running and schema is created (pnpm db:push)');
-    console.log(`2. Import the data: psql -U cliniccore_user -d cliniccore -f ${POSTGRES_DUMP_FILE}`);
-    console.log('3. Or using Docker: docker-compose exec database psql -U cliniccore_user -d cliniccore -f /tmp/postgres_data.sql');
-
+    console.log("");
+    console.log("Next steps:");
+    console.log(
+      "1. Ensure PostgreSQL is running and schema is created (pnpm db:push)"
+    );
+    console.log(
+      `2. Import the data: psql -U cliniccore_user -d cliniccore -f ${POSTGRES_DUMP_FILE}`
+    );
+    console.log(
+      "3. Or using Docker: docker-compose exec database psql -U cliniccore_user -d cliniccore -f /tmp/postgres_data.sql"
+    );
   } catch (error) {
-    console.error('❌ Error converting data:', error.message);
+    console.error("❌ Error converting data:", error.message);
     process.exit(1);
   }
 }
@@ -143,8 +152,8 @@ SELECT * FROM patients WHERE gender NOT IN ('male', 'female', 'other');
 SELECT * FROM appointments WHERE status NOT IN ('scheduled', 'completed', 'cancelled', 'no_show');
 `;
 
-  fs.writeFileSync('manual_conversion.sql', manualSQL);
-  console.log('📝 Manual conversion SQL generated: manual_conversion.sql');
+  fs.writeFileSync("manual_conversion.sql", manualSQL);
+  console.log("📝 Manual conversion SQL generated: manual_conversion.sql");
 }
 
 // Main execution

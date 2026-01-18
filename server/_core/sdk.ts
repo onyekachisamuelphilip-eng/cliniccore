@@ -1,19 +1,24 @@
-import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
-import { ForbiddenError } from "@shared/_core/errors";
-import axios, { type AxiosInstance } from "axios";
-import { parse as parseCookieHeader } from "cookie";
-import type { Request } from "express";
-import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
-import * as db from "../db";
-import { ENV } from "./env";
+import type { AxiosInstance } from "axios";
+import type { Request } from "express";
 import type {
-  ExchangeTokenRequest,
+  GetUserInfoWithJwtResponse,
+  GetUserInfoWithJwtRequest,
   ExchangeTokenResponse,
   GetUserInfoResponse,
-  GetUserInfoWithJwtRequest,
-  GetUserInfoWithJwtResponse,
+  ExchangeTokenRequest,
 } from "./types/manusTypes";
+
+import axios from "axios";
+
+import { AXIOS_TIMEOUT_MS, COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { ForbiddenError } from "@shared/_core/errors";
+import { parse as parseCookieHeader } from "cookie";
+import { SignJWT, jwtVerify } from "jose";
+import { ENV } from "./env";
+
+import * as db from "../db";
+
 // Utility function
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
@@ -24,9 +29,10 @@ export type SessionPayload = {
   name: string;
 };
 
-const EXCHANGE_TOKEN_PATH = `/webdev.v1.WebDevAuthPublicService/ExchangeToken`;
-const GET_USER_INFO_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfo`;
-const GET_USER_INFO_WITH_JWT_PATH = `/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt`;
+const EXCHANGE_TOKEN_PATH = "/webdev.v1.WebDevAuthPublicService/ExchangeToken";
+const GET_USER_INFO_PATH = "/webdev.v1.WebDevAuthPublicService/GetUserInfo";
+const GET_USER_INFO_WITH_JWT_PATH =
+  "/webdev.v1.WebDevAuthPublicService/GetUserInfoWithJwt";
 
 class OAuthService {
   constructor(private client: ReturnType<typeof axios.create>) {
@@ -67,9 +73,7 @@ class OAuthService {
   ): Promise<GetUserInfoResponse> {
     const { data } = await this.client.post<GetUserInfoResponse>(
       GET_USER_INFO_PATH,
-      {
-        accessToken: token.accessToken,
-      }
+      { accessToken: token.accessToken }
     );
 
     return data;
